@@ -1,0 +1,14 @@
+# Default ignored files
+workspace.xml
+realtime_gesture_recog/__pycache__
+realtime_gesture_recog/.idea
+realtime_gesture_recog/__pycache__
+
+# vscode & pycharm
+realtime_gesture_recog/.ipynb_checkpoints
+
+# trainning data
+realtime_gesture_recog/data/
+
+# trainning records
+realtime_gesture_recog/runs/
