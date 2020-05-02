@@ -10,6 +10,7 @@ from qtpy import QtCore, QtWidgets, QtGui
 
 import global_vars
 import models
+from car_stream import CarStream
 from filters import skinMask
 from main_ui import Ui_MainWindow
 from models import load_model
@@ -35,14 +36,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         # camera
         self.camera = cv2.VideoCapture()
-        self.timer_camera = QtCore.QTimer()
         self.CAM_NUM = 0
         self.camera_x0 = 400
         self.camera_y0 = 200
         self.camera_height = 200
         self.camera_width = 200
 
+        # car video stream
+        self.stream = CarStream()
+
         # control
+        self.timer_camera = QtCore.QTimer()
+        self.timer_stream = QtCore.QTimer()
         self.horizontalSlider.setValue(70)
         self.threshold = self.horizontalSlider.value()
 
@@ -51,17 +56,56 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     @log_decorator
     def slot_init(self):
+        self.timer_camera.timeout.connect(self.camera_show)
         self.pushButton_open_cam.clicked.connect(self.camera_open)
         self.pushButton_close_cam.clicked.connect(self.camera_close)
-        self.timer_camera.timeout.connect(self.camera_show)
         self.pushButton_left.clicked.connect(self.box_left)
         self.pushButton_right.clicked.connect(self.box_right)
         self.pushButton_down.clicked.connect(self.box_down)
         self.pushButton_up.clicked.connect(self.box_up)
+        self.pushButton_connect_car.clicked.connect(self.car_control_open)
+        self.pushButton_disconnect.clicked.connect(self.car_control_close)
         self.horizontalSlider.valueChanged.connect(self.threshold_update)
 
         self.signal_prediction_show.connect(self.prediction_show)
         self.signal_gesture_read.connect(self.gesture_show)
+
+    @log_decorator
+    def car_control_open(self, *args):
+        '''
+        open car camera and connect the car controller.
+        :return:
+        '''
+        self.stream.pull()  # call pull to init car camera.
+        frame = self.stream.read_buffer()
+        if frame is not None:
+            if not self.timer_stream.isActive():
+                self.timer_stream.start(30)
+            self.timer_stream.timeout.connect(self.stream_show)
+
+        # TODO: init car controller
+
+    @log_decorator
+    def car_control_close(self, *args):
+        '''
+        close car camera stream and the connection of car controller.
+        :return:
+        '''
+        # disconnect with stream
+        self.timer_stream.timeout.disconnect(self.stream_show)
+        self.label_car.setText("Not recieve car video stream yet.")
+        # TODO: disconnect car controller
+
+    @log_decorator
+    def stream_show(self):
+        '''
+        show camera image, emit signal_gesture_read signal
+        :return:
+        '''
+        frame = self.stream.read_buffer()
+        show = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        showImage = QtGui.QImage(show.data, show.shape[1], show.shape[0], QtGui.QImage.Format_RGB888)
+        self.label_car.setPixmap(QtGui.QPixmap.fromImage(showImage))
 
     @log_decorator
     def camera_open(self, *args):
@@ -77,7 +121,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                                                     buttons=QtWidgets.QMessageBox.Ok,
                                                     defaultButton=QtWidgets.QMessageBox.Ok)
             else:
-                self.timer_camera.start(30)
+                if not self.timer_camera.isActive():
+                    self.timer_camera.start(30)
 
     @log_decorator
     def camera_close(self, *args):
@@ -123,7 +168,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.label_gesture.setPixmap(QtGui.QPixmap.fromImage(showImage))
         # predict image
         if self.prediction_count == self.prediction_frequency:
-            t = threading.Thread(target=models.predict_gesture, args=[self.model, roi],kwargs={"verbose":False})
+            t = threading.Thread(target=models.predict_gesture, args=[self.model, roi], kwargs={"verbose": False})
             t.start()
             self.prediction_count = 0
         else:
