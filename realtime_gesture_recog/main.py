@@ -10,8 +10,10 @@ from qtpy import QtCore, QtWidgets, QtGui
 
 import global_vars
 import models
+from car_controller import CarController
 from car_stream import CarStream
 from filters import skinMask
+from host_detector import HostDetector
 from main_ui import Ui_MainWindow
 from models import load_model
 from utils import *
@@ -21,6 +23,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     # define signals
     signal_gesture_read = pyqtSignal(name="signal_gesture_read")
     signal_prediction_show = pyqtSignal(name="signal_prediction_show")
+    signal_command_send = pyqtSignal(name='signal_command_send')
 
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
@@ -44,6 +47,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         # car video stream
         self.stream = CarStream()
+
+        # car controller
+        self.controller = None
+        self.host_detector = HostDetector()
 
         # control
         self.timer_camera = QtCore.QTimer()
@@ -69,6 +76,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.signal_prediction_show.connect(self.prediction_show)
         self.signal_gesture_read.connect(self.gesture_show)
+        self.signal_command_send.connect(self.command_send)
 
     @log_decorator
     def car_control_open(self, *args):
@@ -76,14 +84,37 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         open car camera and connect the car controller.
         :return:
         '''
+        print(">>> loading.")
+        self.host_detector.detect_hosts()
         self.stream.pull()  # call pull to init car camera.
+
+        # check ESP 8266 connection
+        if self.controller is None:
+            controller_ip = None
+            for host in self.host_detector.hosts:
+                if 'esp' in host or 'ESP' in host:
+                    controller_ip = self.host_detector.hosts[host]
+                    break
+
+            if controller_ip is not None:
+                self.controller = CarController(controller_ip)
+                self.controller.status = 'online'
+                # TODO: check connection
+                # self.controller.test()
+            else:
+                print(">>> ERROR: can't find ESP8266. Current hosts: ", self.host_detector.hosts)
+                msg = QtWidgets.QMessageBox.warning(self, u"Warning", u"请检测汽车芯片ESP8266是否正确连接路由",
+                                                    buttons=QtWidgets.QMessageBox.Ok,
+                                                    defaultButton=QtWidgets.QMessageBox.Ok)
+        else:
+            # had connected before.
+            self.controller.status = 'online'
+        # open car video stream
         frame = self.stream.read_buffer()
         if frame is not None:
             if not self.timer_stream.isActive():
                 self.timer_stream.start(30)
             self.timer_stream.timeout.connect(self.stream_show)
-
-        # TODO: init car controller
 
     @log_decorator
     def car_control_close(self, *args):
@@ -94,7 +125,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # disconnect with stream
         self.timer_stream.timeout.disconnect(self.stream_show)
         self.label_car.setText("Not recieve car video stream yet.")
-        # TODO: disconnect car controller
+        self.controller.status = 'idle'
 
     @log_decorator
     def stream_show(self):
@@ -177,20 +208,26 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def prediction_show(self):
         '''
-        show prediction.
+        show prediction, and emit signal with prediction to controller
         :return:
         '''
         # draw probability plot
         plot = models.update()
+        cmd = None
         # write result
         if len(global_vars.jsonarray) > 0:
             prediction = max(global_vars.jsonarray, key=lambda x: global_vars.jsonarray[x])
             if global_vars.jsonarray[prediction] * 100 > self.threshold:
                 self.label_predict.setText(GESTURE_CLASSES[int(prediction)])
+                cmd = GESTURE_CLASSES[int(prediction)]
         else:
             self.label_predict.setText('nothing')
         showImage = QtGui.QImage(plot.data, plot.shape[1], plot.shape[0], QtGui.QImage.Format_RGB888)
         self.label_probability.setPixmap(QtGui.QPixmap.fromImage(showImage))
+
+        # emit sigal
+        if cmd is not None and self.controller.status=='online':
+            self.signal_command_send.emit(cmd)
 
     # SLOT: update value
     def box_left(self):
@@ -207,6 +244,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def threshold_update(self):
         self.threshold = self.horizontalSlider.value()
+
+    def command_send(self,prediction):
+        self.controller.move(prediction)
 
 
 if __name__ == '__main__':

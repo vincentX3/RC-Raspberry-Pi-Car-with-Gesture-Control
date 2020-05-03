@@ -1,5 +1,4 @@
 from functools import wraps
-
 import cv2
 import numpy as np
 
@@ -9,7 +8,7 @@ PATH_DATA_TEST = './data/test'
 PATH_MODELS = './weights'
 MODEL_VERSION = '/naiveNN_v1'
 
-C_NUM = 6 # total number of classes
+C_NUM = 6  # total number of classes
 C_TURN_LEFT = 1
 C_TURN_RIGHT = 2
 C_BACK_UP = 3
@@ -32,5 +31,6 @@ def log_decorator(func):
             print(">>> Executing:", func.__name__)
             return func(*args, **kwargs)
         except Exception as e:
-            print(">>> Error: %s"%e)
+            print(">>> Error: %s" % e)
+
     return log
