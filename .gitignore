@@ -12,3 +12,6 @@ realtime_gesture_recog/data/
 
 # trainning records
 realtime_gesture_recog/runs/
+realtime_gesture_recog/first_ui.py
+realtime_gesture_recog/show.html
+realtime_gesture_recog/first_ui.py
