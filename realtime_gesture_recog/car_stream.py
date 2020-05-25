@@ -2,18 +2,18 @@ import urllib3
 import numpy as np
 import cv2
 
-from utils import log_decorator
+from utils import log_decorator, RASPBERRY_IP_PORT
 
 
 class CarStream:
-    def __init__(self,host='192.168.0.106:8080',):
+    def __init__(self,host=RASPBERRY_IP_PORT,):
         self.host = host
         self.stream_address = 'http://' + host + '/?action=stream'
         # self.stream_address = 'rtmp://58.200.131.2:1935/livetv/hunantv' # for test
         self.buffer = None
         self.stream = None
 
-    @log_decorator
+    # @log_decorator
     def pull(self):
         '''
         pull a frame from stream and store in buffer
@@ -29,7 +29,7 @@ class CarStream:
         else:
             print(">>> ERROR: can't pull frame from stream.")
 
-    @log_decorator
+    # @log_decorator
     def read_buffer(self,update=True):
         '''
         return frame stored in buffer, if update sets True then update the buffer.

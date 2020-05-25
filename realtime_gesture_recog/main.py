@@ -4,7 +4,7 @@ import threading
 import cv2
 import torch
 import numpy as np
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from qtpy import QtCore, QtWidgets, QtGui
 
@@ -23,7 +23,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     # define signals
     signal_gesture_read = pyqtSignal(name="signal_gesture_read")
     signal_prediction_show = pyqtSignal(name="signal_prediction_show")
-    signal_command_send = pyqtSignal(name='signal_command_send')
+    signal_command_send = pyqtSignal(str,name='signal_command_send')
 
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
@@ -91,10 +91,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # check ESP 8266 connection
         if self.controller is None:
             controller_ip = None
+            print("Found hosts:", self.host_detector.hosts)
             for host in self.host_detector.hosts:
                 if 'esp' in host or 'ESP' in host:
                     controller_ip = self.host_detector.hosts[host]
                     break
+
+            # TODO: seems ESP8266 can't be detect
+            # used static IP for debug.
+            # IP is pre-found from router configuration.
+            if controller_ip is None:
+                controller_ip = '192.168.43.213'
+            # debug end.
 
             if controller_ip is not None:
                 self.controller = CarController(controller_ip)
@@ -127,13 +135,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.label_car.setText("Not recieve car video stream yet.")
         self.controller.status = 'idle'
 
-    @log_decorator
+    # @log_decorator
     def stream_show(self):
         '''
         show camera image, emit signal_gesture_read signal
         :return:
         '''
         frame = self.stream.read_buffer()
+        frame = cv2.resize(frame, (640, 480))
         show = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         showImage = QtGui.QImage(show.data, show.shape[1], show.shape[0], QtGui.QImage.Format_RGB888)
         self.label_car.setPixmap(QtGui.QPixmap.fromImage(showImage))
@@ -177,6 +186,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         frame = cv2.resize(frame, (640, 480))
         self.image = frame
 
+        # notations
         threshold_str = "Current threshlold: %d %%" % self.threshold
         cv2.putText(frame, 'Driver Romm <( ^-^ )>', (FX, FY), FONT, SIZE, (0, 255, 0), 1, 1)
         cv2.putText(frame, threshold_str, (FX, FY + 2 * FH), FONT, SIZE, (0, 255, 0), 1, 1)
@@ -189,6 +199,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # call gesture filter
         self.signal_gesture_read.emit()
 
+    # @log_decorator
     def gesture_show(self):
         '''
         show gesture image after binary mask, emit signal_prediction_show signal
@@ -206,6 +217,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.prediction_count += 1
         self.signal_prediction_show.emit()
 
+    # @log_decorator
     def prediction_show(self):
         '''
         show prediction, and emit signal with prediction to controller
@@ -226,8 +238,37 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.label_probability.setPixmap(QtGui.QPixmap.fromImage(showImage))
 
         # emit sigal
-        if cmd is not None and self.controller.status=='online':
+        if cmd is not None and self.controller.status == 'online':
             self.signal_command_send.emit(cmd)
+
+    @log_decorator
+    def keyPressEvent(self, event):
+        '''
+        rewrite keyboard event for car controller debug.
+        :param event:
+        :return:
+        '''
+        if self.controller is not None and self.controller.status == 'online':
+            if event.key() == Qt.Key_W:
+                # send move forward signal
+                self.signal_command_send.emit("go_ahead")
+            elif event.key() == Qt.Key_A:
+                # send turn left signal
+                self.signal_command_send.emit("turn_left")
+            elif event.key() == Qt.Key_D:
+                # send turn right signal
+                self.signal_command_send.emit("turn_right")
+            elif event.key() == Qt.Key_S:
+                # send back up signal:
+                self.signal_command_send.emit("back_up")
+        else:
+            print("Not connect to ESP8266 yet.")
+            if event.key() == Qt.Key_I:
+                # try to find ESP 8266 's IP
+                self.host_detector.detect_hosts()
+            elif event.key() == Qt.Key_P:
+                # print current detected IPs
+                print(self.host_detector.hosts)
 
     # SLOT: update value
     def box_left(self):
@@ -245,7 +286,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def threshold_update(self):
         self.threshold = self.horizontalSlider.value()
 
-    def command_send(self,prediction):
+    def command_send(self, prediction):
         self.controller.move(prediction)
 
 
