@@ -100,5 +100,5 @@ if __name__ == '__main__':
     # print(detector.get_IPs())
     detector.detect_hosts()
     # detector.get_host_name('192.168.43.111')
-    time.sleep(1)
+    time.sleep(5)
     print(detector.hosts)

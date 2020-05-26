@@ -115,11 +115,10 @@ def update():
 
 def predict_gesture(model, img, cuda=True,verbose=True):
     """
-    输入模型，图像，返回分类结果.
-    同时，更新JsonArray，保存各类别预测结果概率
-    :param model:
-    :param img: 视频流的一帧
-    :return: 分类结果
+    predict gesture, meanwhile update the JsonArray, which is used to save probabilities.
+    :param model: neural network
+    :param img: ROI of a frame
+    :return: prediction result
     """
     img = snap_loader(img, cuda)
     output = model(img)

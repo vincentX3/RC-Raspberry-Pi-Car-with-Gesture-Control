@@ -7,6 +7,7 @@ PATH_DATA = './data/train'
 PATH_DATA_TEST = './data/test'
 PATH_MODELS = './weights'
 MODEL_VERSION = '/naiveNN_v1'
+RASPBERRY_IP_PORT = '192.168.43.97:8080'
 
 C_NUM = 6  # total number of classes
 C_TURN_LEFT = 1

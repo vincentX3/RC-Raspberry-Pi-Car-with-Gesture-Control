@@ -6,7 +6,7 @@ from utils import log_decorator, RASPBERRY_IP_PORT
 
 
 class CarStream:
-    def __init__(self,host=RASPBERRY_IP_PORT,):
+    def __init__(self,host=RASPBERRY_IP_PORT):
         self.host = host
         self.stream_address = 'http://' + host + '/?action=stream'
         # self.stream_address = 'rtmp://58.200.131.2:1935/livetv/hunantv' # for test
