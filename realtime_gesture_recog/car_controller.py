@@ -1,3 +1,6 @@
+# Written by Vincent Xue
+# Copyright (c) 2020 Vincent Xue
+
 import socket
 
 
@@ -13,9 +16,9 @@ class CarController:
             'go_ahead': '3',
             'idle': '4'
         }
-        self.response=None
+        self.response = None
         self.status = 'offline'
-        self._status_type=['offline','online','idle']
+        self._status_type = ['offline', 'online', 'idle']
 
     def move(self, direction):
         '''

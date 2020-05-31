@@ -1,3 +1,6 @@
+# Written by Vincent Xue
+# Copyright (c) 2020 Vincent Xue
+
 from functools import wraps
 import cv2
 import numpy as np

@@ -1,3 +1,6 @@
+# Written by Vincent Xue
+# Copyright (c) 2020 Vincent Xue
+
 import sys
 import threading
 
