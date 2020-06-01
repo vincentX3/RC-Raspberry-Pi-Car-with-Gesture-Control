@@ -1,5 +1,5 @@
 # RC-Raspberry-Pi-Car-with-Gesture-Control
-Have fun! Using gesture to control your Remote Control Raspberry Pi Car!
+Have fun! Using gesture to control your RC(Remote Control) Raspberry Pi Car!
 
 ## What we done?
 Using gesture to control a Raspberry car.
@@ -21,13 +21,15 @@ All the components are communicate under a local network.
 
 
 
-![car](E:\study\else\RC-Raspberry-Pi-Car-with-Gesture-Control\pic\car.jpg)
+![car](pic/car.jpg)
 
 > ESP8266 is at the bottom of the plastic plank.
 >
 > It's codes is written by Ardunio. ([code here](./Udp/Udp.ino))
 
 ## Software
+
+Platform: Win10 with GPU
 
 Language: Python 3.6
 
@@ -47,6 +49,8 @@ In Raspberry site, we used this streamer: https://github.com/Five-great/mjpg-str
 
 > Poor network would limit project's performance.
 
-[demo here]()
 
-For friends who can't visit *Youtube*, see demo [here]()
+
+[![demo](pic/video_fontset.png)](https://youtu.be/5ruoPfujM5M)
+
+For friends who can't visit *Youtube*, see demo [here](https://www.bilibili.com/video/BV1gk4y1r7Ya/)
