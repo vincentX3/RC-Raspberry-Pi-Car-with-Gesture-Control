@@ -21,7 +21,7 @@ All the components are communicate under a local network.
 
 
 
-![car](pic/car.jpg)
+![car](./pic/car.jpg)
 
 > ESP8266 is at the bottom of the plastic plank.
 >
@@ -51,6 +51,6 @@ In Raspberry site, we used this streamer: https://github.com/Five-great/mjpg-str
 
 
 
-[![demo](pic/video_fontset.png)](https://youtu.be/5ruoPfujM5M)
+[![demo](./pic/video_fontset.png)](https://youtu.be/5ruoPfujM5M)
 
 For friends who can't visit *Youtube*, see demo [here](https://www.bilibili.com/video/BV1gk4y1r7Ya/)
